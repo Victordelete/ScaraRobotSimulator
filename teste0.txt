@@ -1,0 +1,16 @@
+move 45 45 0
+
+#testar se o parametro leva até o chão mesmo.
+down
+zmove 50 #movimentação livre de altura
+
+
+pmove 200 200 0 #testar se esse ponto faz parte do VT
+
+#testar somente se o robÔ vai para o lavo inverso antes de terminar
+#cinemática inversa
+move -45 -45 50
+up
+
+#termino a movimentação na base
+home
