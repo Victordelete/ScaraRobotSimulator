@@ -11,6 +11,9 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk )
 
+import serial
+import time
+
 import VisualData.Peca1_dados
 import VisualData.Peca2_dados
 import VisualData.Peca3_dados
@@ -22,10 +25,18 @@ class GraphicsFunctions:
          #angulo de variação da movimentação, via de regra é 1 mas acrescenta-se dessa forma para pode renderizar em variações 
         self.lista_instrucoes = []
         
-        #maiores de angulo        
-        self.delta1 = 1.0
-        self.delta2 = 1.0
+        self.controle = 0
+        
+        #maiores de angulo    
+        self.delta1 = 1
+        self.delta2 = 1
         self.delta3 = 1
+        
+        self.trajetoriaX = []
+        self.trajetoriaY = []
+        self.trajetoriaZ = []
+        
+        self.traj_list = [[0, 400, 165]]
         
         #variável que define a posição atual das juntas do robô
         self.teta1_atual = 0.0
@@ -48,12 +59,6 @@ class GraphicsFunctions:
         self.canvas_robo.draw()
         
         self.ax = self.fig.add_subplot(111, projection="3d")
-
-        #self.ax.add_collection3d(Poly3DCollection(self.verts))
-
-        #self.ax.scatter3D(0.0,0.0,0.0)
-        #self.ax.scatter3D(400,400.0,350.0)
-        #self.ax.scatter3D(-400.0,400.0,350.0)
         
         self.ax.add_collection3d(Poly3DCollection(peca4_verts, 
          facecolors='orange', linewidths=1, edgecolors='k', alpha=.2)) 
@@ -67,7 +72,6 @@ class GraphicsFunctions:
         self.ax.add_collection3d(Poly3DCollection(peca1_verts, 
          facecolors='green', linewidths=1, edgecolors='k', alpha=.9))
         
-        
         self.canvas_robo.get_tk_widget().pack(side=TOP , fill=BOTH, expand=1)
         
         self.ani = animation.FuncAnimation(self.fig, self.animate, interval=2)
@@ -76,6 +80,10 @@ class GraphicsFunctions:
         
         self.ani_state = False
         
+        #seto a porta de comunicação
+        #self.porta_serial = serial.Serial('COM6', 57600)
+        self.porta_serial = 0
+       
     def moving_stop(self):
         self.ani.event_source.stop()
         self.ani_state = False
@@ -92,10 +100,8 @@ class GraphicsFunctions:
         self.InterpretaInit()
         
         #rearranjo o novos pontos de movimentação
-        
         #inicio a movimentação
         self.moving_start()
-        
         
 ####################################################################
 
@@ -105,6 +111,8 @@ class GraphicsFunctions:
         movimento1 = 0
         movimento2 = 0
         movimento3 = 0
+        
+        time_delay = 0.001
         
         temp = [[]]
         
@@ -151,11 +159,10 @@ class GraphicsFunctions:
             #se não houver mais instruções eu paro a movimentação
             if len(self.lista_instrucoes) != 0:
                 self.InterpretaInit()
-            
                         
             if len(self.lista_instrucoes) == 0:
-                self.moving_stop()
-       
+                self.moving_stop() 
+        
         #limpa a tela
         self.ax.clear()
         
@@ -163,13 +170,7 @@ class GraphicsFunctions:
         self.ax.scatter3D(0,-400,0, facecolors = "black", alpha = 0.0) ###importante usar um volume quadrado para não deformar a visão durante movimento
         self.ax.scatter3D(400,400,350, facecolors = "black", alpha = 0.0)
         self.ax.scatter3D(-400,400,350, facecolors = "black", alpha = 0.0)
-        
-        #self.ax.plot([0,400,0], [0,0,0],color='black')#linewidths=1, edgecolors='k', alpha=.9
-        #self.ax.plot([0,-400,0], [0,0,0],color='black')
-        
-        #impressão de ponto de referencia para movimentação dos elos
-        #self.ax.scatter3D(200+self.ref_ponto2[0], self.ref_ponto2[1], self.ref_ponto2[2], facecolors = "black" )
-        
+                
         if movimento1 == 1 :
             #movento o braço 1 em relação ao ponto fixo [0,65,280] self.ref_ponto1
             for i in range(len(peca2_verts)):
@@ -199,6 +200,26 @@ class GraphicsFunctions:
             self.ref_ponto2 = self.rotacionando(self.ref_ponto2 , self.delta1) #rotacionando ponto de referencia 2
             self.ref_ponto2 = self.ref_ponto2 + self.ref_ponto1
             
+            #corrigindo posicionamento do ponto de trajetoria
+            temp1 = self.traj_list[-1] - self.ref_ponto1
+            temp1 = self.rotacionando(temp1, self.delta1) #rotacionando ponto de referencia 2
+            temp1 = temp1 + self.ref_ponto1
+            self.traj_list.append(temp1)
+            self.trajetoriaX.append(self.traj_list[-1][0])
+            self.trajetoriaY.append(self.traj_list[-1][1])
+            self.trajetoriaZ.append(self.traj_list[-1][2])
+            
+            if self.controle == 1:
+                if self.delta1 > 0:
+                    for i in range(5):
+                        self.porta_serial.write(b"B")
+                        time.sleep(time_delay)
+                        
+                if self.delta1 < 0: 
+                    for i in range(5):
+                        self.porta_serial.write(b"A")
+                        time.sleep(time_delay)
+            
 #######################################################################################
         #movimento do braço 2 em relação ao ponto fixo [0, 230, 280]
         if movimento2 == 1 :           
@@ -214,7 +235,26 @@ class GraphicsFunctions:
                 for j in range(len(peca4_verts[i])):
                     peca4_verts[i][j] = peca4_verts[i][j] - self.ref_ponto2 
                     peca4_verts[i][j] = self.rotacionando(peca4_verts[i][j], self.delta2)
-                    peca4_verts[i][j] = peca4_verts[i][j] + self.ref_ponto2 
+                    peca4_verts[i][j] = peca4_verts[i][j] + self.ref_ponto2
+                    
+            temp1 = self.traj_list[-1] - self.ref_ponto2
+            temp1 = self.rotacionando(temp1, self.delta2) #rotacionando ponto de referencia 2
+            temp1 = temp1 + self.ref_ponto2
+            self.traj_list.append(temp1)
+            self.trajetoriaX.append(self.traj_list[-1][0])
+            self.trajetoriaY.append(self.traj_list[-1][1])
+            self.trajetoriaZ.append(self.traj_list[-1][2])
+                
+            if self.controle == 1:
+                if self.delta2 > 0:
+                    for i in range(5):
+                        self.porta_serial.write(b"D")
+                        time.sleep(time_delay)
+                        
+                if self.delta2 < 0: 
+                    for i in range(5):
+                        self.porta_serial.write(b"C")
+                        time.sleep(time_delay)
                     
 #######################################################################################
         #movimento do braço 3
@@ -223,7 +263,15 @@ class GraphicsFunctions:
             for i in range(len(peca4_verts)):
                 for j in range(len(peca4_verts[i])):
                     peca4_verts[i][j] = peca4_verts[i][j] - [0, 0, self.delta3]
-
+                    
+            temp1 = self.traj_list[-1] - [0, 0, self.delta3]
+            self.traj_list.append(temp1)
+            self.trajetoriaX.append(self.traj_list[-1][0])
+            self.trajetoriaY.append(self.traj_list[-1][1])
+            self.trajetoriaZ.append(self.traj_list[-1][2])
+                
+        #imprimo as listas de trajetórias atualizada
+        self.ax.plot(self.trajetoriaX, self.trajetoriaY, self.trajetoriaZ, alpha=.5, color='black')
         
         #imprimindo os vertices na tela
         self.ax.add_collection3d(Poly3DCollection(peca4_verts, 
@@ -281,8 +329,6 @@ class GraphicsFunctions:
         if self.lista_instrucoes[0][0] == 2:
             #funcao que transforma a posição em teta para o robo
             self.Cinematica_inversa()
-            #a altura não muda nessa posição
-            self.altura3_novo = self.lista_instrucoes[0][3]
             
         #função up
         if self.lista_instrucoes[0][0] == 3:
@@ -309,14 +355,39 @@ class GraphicsFunctions:
             self.teta2_novo = 0
             self.altura3_novo =  0
             
+        #função lmove            
         if self.lista_instrucoes[0][0] == 7:
-            print('lmove')
+            Xold = 140*np.cos((self.teta1_atual + self.teta2_atual)*(np.pi/180))+174*np.cos((self.teta2_atual)*(np.pi/180))+65 #valor de x
+            Yold = 140*np.sin((self.teta1_atual + self.teta2_atual)*(np.pi/180))+174*np.sin((self.teta2_atual)**(np.pi/180)) #valor de y
+            Xnew = self.lista_instrucoes[0][1]
+            Ynew = self.lista_instrucoes[0][2]
+            Zold = self.altura3_atual
+            Znew = self.lista_instrucoes[0][3]
+            lista = [] #lista vazia para substituir reorganizar o movelo antigo
             
+            delta = (Xnew-Xold)/100
+            gain = (Ynew-Yold)/(Xnew-Xold) #the gain in rect
+            
+                
+            num_passes = abs(round(( Xnew - Xold )/delta))
+            
+            #linha reta em z
+            gainZ = ( Znew-Zold )/(Xnew - Xold)
+            
+            for i in range(int(100)):
+                Xold += delta
+                Yold += delta*gain
+                Zold += gainZ
+                
+                lista.append([2, (Xold), (Yold), Zold ])
+                      
+            self.lista_instrucoes = lista + self.lista_instrucoes[1:]          
+                    
         #função zmove
         if self.lista_instrucoes[0][0] == 8:
             self.teta1_novo = self.teta1_atual
             self.teta2_novo = self.teta2_atual
-            self.altura3_novo =  self.lista_instrucoes[0][1] #altura máxima
+            self.altura3_novo =  self.lista_instrucoes[0][1] 
                         
     
     def Cinematica_inversa(self):
@@ -333,19 +404,19 @@ class GraphicsFunctions:
         #k = 0
         
         if y<0:
-            t2n = abs(t2n)
-            #k = 1
-            y = abs(y)
+            t2n = -abs(t2n)
         
         #calculo um valor possível para teta1 e testo para saber se é válido
         num = y*(174+140*np.cos(t2n) )  - x*140*np.sin(t2n)
         den = x*(174+140*np.cos(t2n) )  + y*140*np.sin(t2n)
         
-        #soma de offset para evitar divisão por zero. A resposta sai correta mas é bom evitar.
-        t1n = np.arctan(num/(den+0.0001))
+        t1n = np.arctan(num/(den))
             
         self.teta1_novo = round(t1n*(180/np.pi), 0)
         self.teta2_novo = round(t2n*(180/np.pi), 0)
+        self.altura3_novo = self.lista_instrucoes[0][3]
+        
+        
         
 peca1_verts = VisualData.Peca1_dados.peca1()
 peca2_verts = VisualData.Peca2_dados.peca2()

@@ -1,1 +1,4 @@
+#programa de teste geral
+
+move 10 10 0
 home

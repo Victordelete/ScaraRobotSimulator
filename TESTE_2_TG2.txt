@@ -1,0 +1,23 @@
+#PROGRAMA DE TESTE 2
+#TESTE DE TRAJETÓRIA COMPOSTAS (variação de funções de movimentação)
+#teta1 = 45
+#teta2 = 70
+
+#indo para o ponto
+pmove 63.87 249.92 0
+home
+
+#indo para o ponto em linha reta
+lmove 63.87 249.92 0
+home
+
+#indo para o ponto
+pmove 63.87 -249.92 0
+home
+
+#indo para o ponto em linha reta
+lmove 63.87 -249.92 0
+home
+
+#140*cos(45+45)+174*cos(45)+65 = 123.04
+#140*sin(45+45)+174*sin(45) = 263.04

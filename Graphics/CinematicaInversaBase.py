@@ -1,8 +1,8 @@
 import numpy as np
 
 
-t1 = 90
-t2 = -30
+t1 = -60
+t2 = -60
 
 
 x = 140*np.cos((t1+t2)*(np.pi/180)) + 174*np.cos((t1)*(np.pi/180))
@@ -10,11 +10,13 @@ y = 140*np.sin((t1+t2)*(np.pi/180)) + 174*np.sin((t1)*(np.pi/180))
 
 x = round(x, 1)
 y = round(y, 1)
+
 ################################33
 print ("x", x)
 print ("y", y)
+
 #x = 233
-#y = 180
+#y = -180
 
 
 #assumindo compilação correta e o ponto esta na área de trabalho
