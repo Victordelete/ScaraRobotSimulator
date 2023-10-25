@@ -1,8 +1,8 @@
-#PROGRAMA DE TESTE 3
-#TESTE DE LIMITES DURANTE SIMULAÇÃO
-move 90 90 0 #limites positivos das variáveis de controle
-move -90 -90 0 #limites negativos das variáveis de controle
+#PROGRAMA DE TESTE
+#TESTE DE LIMITES DURANTE SIMULAO
+move 90 90 0 #limites positivos das variveis de controle
+move -90 -90 0 #limites negativos das varveis de controle
 down
-move 90 90 160 #intercalação de limites positivo/negativo
-move 0 0 160 #intercalção de limite negativo/positivo
+move 90 90 160 #intercalao de limites positivo/negativo
+move 0 0 160 #intercalo de limite negativo/positivo
 home

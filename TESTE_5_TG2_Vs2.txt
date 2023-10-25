@@ -1,5 +1,5 @@
 #PROGRAMA DE TESTE 5
-#TESTE DE TRAJETÓRIA COMPOSTAS (variação de funções de movimentação)
+#TESTE DE TRAJETRIA COMPOSTAS (variavel de funcoes de movimentacao)
 
 pmove 17 272 0
 home

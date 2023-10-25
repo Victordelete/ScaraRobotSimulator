@@ -1,5 +1,5 @@
 #PROGRAMA DE TESTE 2
-#TESTE DE TRAJETÓRIA COMPOSTAS (variação de funções de movimentação)
+#TESTE DE TRAJETRIA COMPOSTAS (variao de funes de movimentao)
 #teta1 = 45
 #teta2 = 70
 

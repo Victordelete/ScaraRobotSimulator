@@ -1,5 +1,5 @@
 #PROGRAMA DE TESTE 5
-#TESTE DE TRAJETÓRIA COMPOSTAS (variação de funções de movimentação)
+#TESTE DE TRAJEToRIA COMPOSTAS (variacao de funcoes de movimentacao)
 
 move 45 45 0
 home 
